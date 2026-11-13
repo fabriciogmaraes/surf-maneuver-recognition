@@ -1,20 +1,20 @@
-# Dados e vídeo
+# Data and video
 numpy
 pandas
 opencv-python
 decord
 
-# Modelos
+# Models
 torch
 torchvision
 transformers
 ultralytics
 scikit-learn
 
-# Visualização e app
+# Visualization and app
 matplotlib
 seaborn
 gradio
 
-# Download da base
+# Dataset download
 huggingface_hub
