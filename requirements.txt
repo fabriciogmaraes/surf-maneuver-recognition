@@ -1,0 +1,20 @@
+# Dados e vídeo
+numpy
+pandas
+opencv-python
+decord
+
+# Modelos
+torch
+torchvision
+transformers
+ultralytics
+scikit-learn
+
+# Visualização e app
+matplotlib
+seaborn
+gradio
+
+# Download da base
+huggingface_hub
