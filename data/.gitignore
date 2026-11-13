@@ -1,0 +1,4 @@
+# Data is not versioned (large files with a public source).
+*
+!.gitignore
+!README.md
