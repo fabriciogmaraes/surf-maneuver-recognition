@@ -2,19 +2,22 @@
 numpy
 pandas
 opencv-python
-decord
 
 # Models
 torch
 torchvision
 transformers
 ultralytics
+libreyolo
 scikit-learn
 
 # Visualization and app
 matplotlib
 seaborn
 gradio
+
+# Notebooks
+ipykernel
 
 # Dataset download
 huggingface_hub
