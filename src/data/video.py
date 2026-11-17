@@ -18,3 +18,24 @@ def read_frame(path: Path, position: float = 0.5) -> np.ndarray | None:
     cap.release()
     # OpenCV reads BGR; models and matplotlib expect RGB
     return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) if ok else None
+
+def read_clip(path: Path, num_frames: int = 16) -> np.ndarray:
+    """Return `num_frames` evenly spaced RGB frames of a clip, shape (T, H, W, 3), dtype uint8.
+
+    Frames are read sequentially and sampled afterwards: seeking frame by frame can land on
+    the wrong frame in compressed videos, and the declared frame count is not always exact.
+    """
+    cap = cv2.VideoCapture(str(path))
+    frames = []
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            break
+        frames.append(frame)
+    cap.release()
+
+    if len(frames) < num_frames:
+        raise ValueError(f"{path} has only {len(frames)} frames, {num_frames} needed")
+
+    indices = np.linspace(0, len(frames) - 1, num_frames).round().astype(int)
+    return np.stack([cv2.cvtColor(frames[i], cv2.COLOR_BGR2RGB) for i in indices])
