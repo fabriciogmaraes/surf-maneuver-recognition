@@ -69,17 +69,24 @@ def window_labels(windows, classes, min_confidence=0.6, min_surfer_frames=8, nov
 
 
 def to_segments(windows, classes, min_confidence=0.6, min_surfer_frames=8, novelty_threshold=None):
-    """Merge consecutive windows with the same label (see `window_labels`) into segments."""
+    """Merge consecutive windows with the same label (see `window_labels`) into segments.
+
+    Windows overlap, so each window only covers the stretch of time closest to its center
+    (cut halfway between neighboring centers). Segments therefore never overlap, and they
+    match the timeline bar drawn on the annotated video.
+    """
     labels, confidence = window_labels(windows, classes, min_confidence, min_surfer_frames, novelty_threshold)
+    centers = ((windows["start_s"] + windows["end_s"]) / 2).to_numpy()
+    edges = np.concatenate([[0.0], (centers[1:] + centers[:-1]) / 2, [windows["end_s"].iloc[-1]]])
 
     segments = []
     for i, label in enumerate(labels):
         if segments and segments[-1]["label"] == label:
-            segments[-1]["end_s"] = windows["end_s"].iloc[i]
+            segments[-1]["end_s"] = edges[i + 1]
             segments[-1]["confidences"].append(confidence[i])
         else:
-            segments.append({"label": label, "start_s": windows["start_s"].iloc[i],
-                             "end_s": windows["end_s"].iloc[i], "confidences": [confidence[i]]})
+            segments.append({"label": label, "start_s": edges[i], "end_s": edges[i + 1],
+                             "confidences": [confidence[i]]})
     segments = pd.DataFrame(segments)
     segments["confidence"] = segments.pop("confidences").map(np.mean).round(2)
     return segments
