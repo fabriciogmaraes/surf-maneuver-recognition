@@ -50,17 +50,27 @@ def label_windows(frames, fps, window_s, stride_s, detector, encoder, probe):
     return pd.DataFrame(rows)
 
 
-def to_segments(windows, classes, min_confidence=0.6, min_surfer_frames=8):
-    """Merge consecutive windows with the same label into segments.
+def window_labels(windows, classes, min_confidence=0.6, min_surfer_frames=8, novelty_threshold=None):
+    """Label and top-class confidence of every window.
 
     A window is labeled "none" when the surfer is found in fewer than `min_surfer_frames` of its
     16 frames or when the top class probability is below `min_confidence`: the training data has
     no "no maneuver" class, so low confidence is the only signal that nothing known is happening.
+    With `novelty_threshold`, windows whose `knn_distance` is above it are labeled "unfamiliar":
+    the footage looks unlike any training clip, so the class probabilities are not trusted.
     """
     probs = windows.reindex(columns=classes).to_numpy(dtype=float)
     confidence = np.nan_to_num(probs, nan=0.0).max(axis=1)
     labels = np.array(classes)[np.nan_to_num(probs, nan=-1.0).argmax(axis=1)].astype(object)
-    labels[(confidence < min_confidence) | (windows["surfer_frames"] < min_surfer_frames)] = "none"
+    labels[(confidence < min_confidence) | (windows["surfer_frames"] < min_surfer_frames).to_numpy()] = "none"
+    if novelty_threshold is not None and "knn_distance" in windows:
+        labels[windows["knn_distance"].to_numpy() > novelty_threshold] = "unfamiliar"
+    return labels, confidence
+
+
+def to_segments(windows, classes, min_confidence=0.6, min_surfer_frames=8, novelty_threshold=None):
+    """Merge consecutive windows with the same label (see `window_labels`) into segments."""
+    labels, confidence = window_labels(windows, classes, min_confidence, min_surfer_frames, novelty_threshold)
 
     segments = []
     for i, label in enumerate(labels):

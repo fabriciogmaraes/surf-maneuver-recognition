@@ -2,6 +2,7 @@
 numpy
 pandas
 opencv-python
+imageio-ffmpeg
 
 # Models
 torch
