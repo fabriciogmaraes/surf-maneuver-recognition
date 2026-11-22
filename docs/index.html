@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manobras de surf em vídeo</title>
+<meta name="description" content="Reconhecimento e segmentação temporal de manobras de surf em vídeo: apresentação do trabalho final de Visão Computacional (PPGTI3007, PPgTI/UFRN).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --foam: #EEF2F1;
+  --deep: #10303A;
+  --swell: #557178;
+  --line: #C6D3D4;
+  --sand: #E6DDC8;
+  --paper: #FFFFFF;
+  --c360: #2A6FDB;
+  --cut: #E07B39;
+  --rol: #3BA55C;
+  --tko: #9B59B6;
+  --none: #9AA0A6;
+  --unfam: #4B5563;
+  --bar-h: 46px;
+  --pad-x: clamp(16px, 6vw, 96px);
+  --pad-y: clamp(24px, 6vh, 72px);
+  font-family: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  color: var(--deep);
+  background: var(--foam);
+}
+* { box-sizing: border-box; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+body { margin: 0; background: var(--foam); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Slides */
+.slide {
+  min-height: 100vh;
+  min-height: 100svh;
+  scroll-snap-align: start;
+  padding: var(--pad-y) var(--pad-x) calc(var(--pad-y) + var(--bar-h));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 3vh, 32px);
+  position: relative;
+}
+.slide + .slide { border-top: 1px solid var(--line); }
+h1, h2 {
+  font-stretch: 72%;
+  font-weight: 850;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  margin: 0;
+  max-width: 22ch;
+}
+h1 { font-size: clamp(40px, 5.6vw, 92px); }
+h2 { font-size: clamp(32px, 4.6vw, 68px); }
+.lede {
+  font-size: clamp(17px, 1.6vw, 26px);
+  line-height: 1.4;
+  color: var(--swell);
+  max-width: 60ch;
+  margin: 0;
+}
+p, li { font-size: clamp(17px, 1.6vw, 26px); line-height: 1.42; }
+p { margin: 0; max-width: 62ch; }
+ul { margin: 0; padding-left: 1.1em; }
+li + li { margin-top: 0.45em; }
+strong { font-weight: 750; }
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(20px, 4vw, 64px);
+  align-items: center;
+  flex: 1;
+}
+.grid.even { grid-template-columns: 1fr 1fr; }
+.stack { display: flex; flex-direction: column; gap: 18px; }
+figure { margin: 0; }
+figure img, figure video {
+  display: block; width: 100%; height: auto;
+  border-radius: 6px; background: var(--paper);
+  box-shadow: 0 1px 0 var(--line);
+}
+figcaption { font-size: 14px; color: var(--swell); margin-top: 8px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Title slide */
+.title { justify-content: center; }
+.title .grid { align-items: center; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+.byline { font-size: clamp(15px, 1.2vw, 19px); line-height: 1.5; color: var(--swell); }
+.byline strong { color: var(--deep); }
+
+/* Maneuver chips */
+.moves { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; }
+.move { border-left: 6px solid var(--c); padding: 4px 0 4px 14px; }
+.move b { display: block; font-stretch: 80%; font-size: clamp(20px, 1.8vw, 28px); font-weight: 800; }
+.move span { color: var(--swell); font-size: clamp(15px, 1.2vw, 18px); }
+
+/* Horizontal bars (counts start at zero) */
+.bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 10px 14px; align-items: center; }
+.bars .lbl { font-weight: 650; font-size: clamp(16px, 1.4vw, 22px); }
+.bars .track { height: 34px; background: transparent; }
+.bars .fill { height: 100%; border-radius: 0 4px 4px 0; background: var(--c); }
+.bars .val { font-variant-numeric: tabular-nums; font-weight: 650; font-size: clamp(16px, 1.4vw, 22px); }
+
+/* Split strip */
+.split { display: flex; height: 34px; border-radius: 4px; overflow: hidden; gap: 2px; }
+.split div { display: flex; align-items: center; padding-left: 8px; color: #fff; font-size: 14px; font-weight: 650; white-space: nowrap; }
+
+/* Pipeline (a real sequence, so it is numbered) */
+.flow { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; counter-reset: step; }
+.flow li { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 14px 12px 16px; counter-increment: step; position: relative; }
+.flow li::before { content: counter(step); display: block; font-stretch: 72%; font-weight: 850; font-size: 30px; color: var(--line); line-height: 1; margin-bottom: 8px; }
+.flow b { display: block; font-size: clamp(16px, 1.3vw, 20px); margin-bottom: 4px; }
+.flow span { font-size: clamp(13px, 1vw, 16px); color: var(--swell); line-height: 1.35; display: block; }
+.labels { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+.labels span { display: inline-flex; align-items: center; gap: 8px; font-size: clamp(14px, 1.1vw, 17px); }
+.labels i { width: 14px; height: 14px; border-radius: 3px; background: var(--c); display: inline-block; }
+
+/* Tables */
+table { border-collapse: collapse; width: 100%; font-size: clamp(15px, 1.45vw, 24px); }
+th, td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 650; color: var(--swell); font-size: 0.85em; }
+td.num, th.num { text-align: right; }
+tr.best td { font-weight: 750; }
+
+/* Dot scale for macro F1 (axis does not start at zero, so dots, not bars) */
+.scale { position: relative; padding: 8px 0 0; }
+.scale .row { display: grid; grid-template-columns: 15ch 1fr; align-items: center; gap: 14px; height: 54px; font-size: clamp(16px, 1.35vw, 21px); }
+.scale .axis { position: relative; height: 100%; border-left: 1px solid var(--line); }
+.scale .axis::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed var(--line); }
+.scale .dot { position: absolute; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--c); border: 2px solid var(--foam); z-index: 1; }
+.scale .dot em { position: absolute; left: 26px; top: -6px; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; font-size: clamp(16px, 1.35vw, 21px); white-space: nowrap; }
+.scale .ticks-row { height: 24px; }
+.scale .ticks { position: relative; height: 100%; }
+.scale .ticks span { position: absolute; transform: translateX(-50%); font-size: 13px; color: var(--swell); font-variant-numeric: tabular-nums; }
+
+/* Demo tabs */
+.tabs { display: flex; gap: 8px; }
+.tabs button { font: inherit; font-weight: 650; font-size: 16px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--deep); background: transparent; color: var(--deep); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--deep); color: var(--foam); }
+.demo-pane { flex: 1; display: flex; min-height: 0; }
+.demo-pane[hidden], .tabs[hidden] { display: none; }
+.demo-pane video { max-height: 62vh; width: auto; max-width: 100%; margin: 0 auto; }
+.demo-pane iframe { width: 100%; min-height: 62vh; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); }
+
+.qr { width: clamp(140px, 14vw, 220px); height: auto; }
+.links a { color: var(--deep); font-weight: 650; text-underline-offset: 3px; }
+
+/* Speaker notes (press N) */
+.notes { display: none; }
+body.show-notes .notes {
+  display: block; position: absolute; right: var(--pad-x); top: var(--pad-y);
+  width: min(34ch, 40vw); background: var(--deep); color: var(--foam);
+  padding: 14px 16px; border-radius: 6px; font-size: 15px; line-height: 1.45; z-index: 5;
+}
+body.show-notes .notes p, body.show-notes .notes li { font-size: 15px; }
+
+/* Heat timeline: the talk's own maneuver timeline */
+.heat {
+  position: fixed; left: 0; right: 0; bottom: 0; height: var(--bar-h);
+  background: var(--deep); display: flex; align-items: center; gap: 12px;
+  padding: 0 12px; z-index: 10;
+}
+.heat .segs { flex: 1; display: flex; height: 18px; gap: 2px; position: relative; }
+.heat .segs button {
+  flex: var(--w) 1 0; border: 0; padding: 0; border-radius: 2px;
+  background: var(--c); opacity: 0.38; cursor: pointer;
+}
+.heat .segs button.on { opacity: 1; }
+.heat .segs button:focus-visible { outline: 2px solid var(--foam); outline-offset: 2px; }
+.heat .cursor { position: absolute; top: -6px; bottom: -6px; width: 3px; background: var(--foam); border-radius: 2px; left: 0; pointer-events: none; transition: left 0.25s; }
+.heat .clock { color: var(--foam); font-variant-numeric: tabular-nums; font-size: 14px; min-width: 11ch; text-align: right; }
+.heat .clock.late { color: #F2B8A0; }
+.heat .help { color: var(--line); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .heat .cursor { transition: none; } }
+
+/* Small screens: plain scrolling document */
+@media (max-width: 860px) {
+  html { scroll-snap-type: none; }
+  .slide { min-height: auto; }
+  .grid, .grid.even { grid-template-columns: 1fr; }
+  .title .grid { grid-template-columns: 1fr; }
+  .flow { grid-template-columns: 1fr 1fr; }
+  .moves { grid-template-columns: 1fr; }
+  .heat .help { display: none; }
+  body.show-notes .notes { position: static; width: auto; }
+}
+</style>
+</head>
+<body>
+
+<main>
+
+<section class="slide title" id="abertura" data-title="Abertura" data-sec="30" data-c="var(--tko)">
+  <div class="grid">
+    <div class="stack">
+      <h1>Reconhecendo manobras de surf em vídeo</h1>
+      <p class="lede">Detecção do surfista, um modelo de vídeo congelado e uma linha do tempo que diz qual manobra aconteceu e quando.</p>
+      <p class="byline"><strong>Fabricio Guimarães</strong><br>Visão Computacional (PPGTI3007), Prof. Helton Maia<br>PPgTI/UFRN, 2026.2</p>
+    </div>
+    <figure>
+      <video src="assets/demo_test_montage.mp4" autoplay muted loop playsinline aria-label="Clipes de teste anotados pelo modelo: esqueleto, caixa colorida pela manobra e barra da linha do tempo"></video>
+      <figcaption>Saída do sistema em clipes de sessões que o modelo nunca viu.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes"><p>Me apresentar. A ideia: dado um vídeo de surf, dizer qual manobra e quando, como uma linha do tempo. A barra escura embaixo é a linha do tempo desta apresentação, com as cores das manobras.</p></aside>
+</section>
+
+<section class="slide" id="problema" data-title="Problema" data-sec="60" data-c="var(--tko)">
+  <h2>Um juiz olha corpo e prancha por dois ou três segundos</h2>
+  <div class="grid">
+    <div class="moves">
+      <div class="move" style="--c: var(--tko)"><b>Take-off</b><span>sair da remada e ficar de pé na onda</span></div>
+      <div class="move" style="--c: var(--cut)"><b>Cutback</b><span>virada de volta em direção à espuma</span></div>
+      <div class="move" style="--c: var(--rol)"><b>Roller</b><span>subir na crista e descer junto com a quebra</span></div>
+      <div class="move" style="--c: var(--c360)"><b>360</b><span>giro completo do surfista com a prancha</span></div>
+    </div>
+    <div class="stack">
+      <p><strong>Por que é difícil:</strong></p>
+      <ul>
+        <li>o surfista ocupa uma parte pequena do quadro;</li>
+        <li>a câmera acompanha, aproxima e treme;</li>
+        <li>água e spray escondem o corpo;</li>
+        <li>duas manobras podem diferir só no jeito como a virada acontece.</li>
+      </ul>
+      <p><strong>Objetivo:</strong> vídeo de entrada, linha do tempo de saída. Por exemplo: 0:12 take-off, 0:15 cutback.</p>
+    </div>
+  </div>
+  <aside class="notes"><p>Explicar as 4 manobras rapidamente. Ênfase: cutback e roller são parecidos, a diferença está em como a virada acontece. Isso vai voltar no slide da ordem temporal.</p></aside>
+</section>
+
+<section class="slide" id="dados" data-title="Dados" data-sec="60" data-c="var(--rol)">
+  <h2>1.062 clipes de campeonato, de cerca de 3 segundos</h2>
+  <div class="grid">
+    <div class="stack">
+      <p>Dataset público <strong>Surf Maneuver Recognition</strong> (Hugging Face, Apache 2.0): imagens laterais de campeonato, já cortadas em clipes de uma manobra.</p>
+      <p>Duração mediana de <strong>2,8 s</strong>. Quatro vezes mais roller que take-off, então a métrica é o <strong>macro F1</strong>: a média do acerto de cada manobra, para a classe grande não esconder as pequenas.</p>
+    </div>
+    <div class="bars" role="img" aria-label="Clipes por classe após a limpeza: roller 520, cutback 235, 360 180, take-off 121">
+      <span class="lbl">Roller</span><div class="track"><div class="fill" style="--c: var(--rol); width: 100%"></div></div><span class="val">520</span>
+      <span class="lbl">Cutback</span><div class="track"><div class="fill" style="--c: var(--cut); width: 45.2%"></div></div><span class="val">235</span>
+      <span class="lbl">360</span><div class="track"><div class="fill" style="--c: var(--c360); width: 34.6%"></div></div><span class="val">180</span>
+      <span class="lbl">Take-off</span><div class="track"><div class="fill" style="--c: var(--tko); width: 23.3%"></div></div><span class="val">121</span>
+    </div>
+  </div>
+  <aside class="notes"><p>Números depois da limpeza (1.056 clipes). Explicar macro F1 em uma frase: média do F1 de cada classe.</p></aside>
+</section>
+
+<section class="slide" id="auditoria" data-title="Auditoria dos dados" data-sec="90" data-c="var(--rol)">
+  <h2>O teste tinha questões que o modelo já tinha visto</h2>
+  <div class="grid even">
+    <ul>
+      <li><strong>Sessões misturadas.</strong> Clipes com números vizinhos são da mesma sessão: mesmo surfista, praia e câmera. Na divisão original, 46% dos vizinhos caem em lados diferentes.</li>
+      <li><strong>Quase-duplicatas.</strong> Comparando quadros com o DINOv2, achei cópias do mesmo clipe com outra cor ou marca d'água, uma no treino e outra no teste.</li>
+      <li><strong>Rótulos conflitantes.</strong> 3 vídeos guardados em duas manobras ao mesmo tempo. Removidos.</li>
+    </ul>
+    <div class="stack">
+      <p><strong>Correção:</strong> agrupar os clipes em <strong>36 sessões</strong> e dividir por sessão inteira. Cada sessão fica de um lado só.</p>
+      <div class="split" role="img" aria-label="Divisão por sessão: 735 treino, 85 validação, 236 teste">
+        <div style="flex: 735; background: var(--deep)">treino 735</div>
+        <div style="flex: 85; background: var(--swell)">85</div>
+        <div style="flex: 236; background: var(--cut)">teste 236</div>
+      </div>
+      <p class="lede">Validação com 85 clipes. Na divisão original, 34 das 36 sessões estavam espalhadas entre treino, validação e teste.</p>
+    </div>
+  </div>
+  <aside class="notes"><p>Essa é a parte mais forte do trabalho. Até onde encontrei, nenhum estudo publicado usou esse dataset, então a auditoria é contribuição.</p></aside>
+</section>
+
+<section class="slide" id="pipeline" data-title="Pipeline" data-sec="90" data-c="var(--cut)">
+  <h2>Do vídeo à linha do tempo</h2>
+  <ol class="flow">
+    <li><b>Janela deslizante</b><span>2,8 s, avançando 0,7 s; 16 quadros por janela</span></li>
+    <li><b>YOLO26</b><span>acha o surfista em cada quadro e descarta detecções soltas</span></li>
+    <li><b>Recorte</b><span>quadrado fixo em volta da trajetória do surfista</span></li>
+    <li><b>V-JEPA 2</b><span>modelo de vídeo da Meta, congelado: 8 fatias de tempo × 1.024 números</span></li>
+    <li><b>Sonda linear</b><span>regressão logística, a única parte treinada</span></li>
+    <li><b>Rótulo</b><span>manobra, sem manobra ou filmagem estranha, juntado em segmentos</span></li>
+  </ol>
+  <div class="labels">
+    <span style="--c: var(--tko)"><i></i>take-off</span>
+    <span style="--c: var(--cut)"><i></i>cutback</span>
+    <span style="--c: var(--rol)"><i></i>roller</span>
+    <span style="--c: var(--c360)"><i></i>360</span>
+    <span style="--c: var(--none)"><i></i>sem manobra (confiança abaixo de 0,6 ou surfista invisível)</span>
+    <span style="--c: var(--unfam)"><i></i>filmagem estranha (longe de todo clipe de treino)</span>
+  </div>
+  <p>Com só ~1.000 clipes, treinar um modelo de vídeo inteiro decoraria os exemplos. Congelar o V-JEPA 2 e treinar só a camada final leva segundos e generaliza melhor.</p>
+  <aside class="notes"><p>V-JEPA 2: 326M de parâmetros, roda numa RTX 3050 de notebook (0,38 s por clipe). A sonda linear tem ~4 mil parâmetros.</p></aside>
+</section>
+
+<section class="slide" id="vazamento" data-title="Vazamento medido" data-sec="90" data-c="var(--cut)">
+  <h2>Medido 50 vezes, o vazamento infla o resultado em 3 pontos</h2>
+  <div class="grid">
+    <div class="stack">
+      <table>
+        <thead><tr><th>divisão</th><th class="num">macro F1 (50 folds)</th></tr></thead>
+        <tbody>
+          <tr><td>aleatória por clipe</td><td class="num">0,911 ± 0,018</td></tr>
+          <tr><td>por sessão</td><td class="num">0,880 ± 0,033</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>A diferença apareceu em <strong>10 de 10</strong> repetições (Mann-Whitney, p = 7×10⁻⁷).</li>
+        <li>Na divisão por sessão o resultado varia quase o dobro: depende de quais praias o modelo nunca viu.</li>
+        <li>O <code>StratifiedGroupKFold</code> do scikit-learn gerou só <strong>7 divisões distintas em 50</strong>. Escrevi um divisor próprio.</li>
+      </ul>
+    </div>
+    <figure>
+      <img src="assets/leakage_repeated_splits.png" alt="Macro F1 de 50 folds por tipo de divisão: média 0,911 na divisão aleatória por clipe e 0,880 na divisão por sessão" loading="lazy">
+      <figcaption>Cada ponto é um fold. Mesmo modelo, mesmas features; só muda a divisão.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes"><p>Uma divisão só (0,886 × 0,856) podia ser sorte. 10 repetições de validação cruzada de 5 folds. O bug do scikit-learn: ordena os grupos antes de embaralhar.</p></aside>
+</section>
+
+<section class="slide" id="ordem" data-title="Ordem temporal" data-sec="60" data-c="var(--cut)">
+  <h2>A ordem temporal não era o que faltava</h2>
+  <div class="grid even">
+    <div class="stack">
+      <p>A maior confusão era <strong>cutback com roller</strong>. Hipótese: falta a ordem do movimento, porque a sonda linear tira a média das 8 fatias.</p>
+      <p>Teste controlado: uma sonda de atenção que lê as fatias em sequência, e <strong>a mesma sonda sem informação de ordem</strong>. Cinco treinos de cada.</p>
+      <p class="lede">As duas melhoram 6 pontos e empatam entre si. O ganho vem de juntar as fatias com atenção, não da ordem. Hipótese errada, e é para isso que serve o controle.</p>
+    </div>
+    <table>
+      <thead><tr><th>classificador</th><th class="num">macro F1</th><th class="num">F1 cutback</th></tr></thead>
+      <tbody>
+        <tr><td>sonda linear (média das fatias)</td><td class="num">0,856</td><td class="num">0,725</td></tr>
+        <tr><td>atenção sem ordem</td><td class="num">0,911 ± 0,017</td><td class="num">0,844</td></tr>
+        <tr><td>atenção com ordem</td><td class="num">0,921 ± 0,025</td><td class="num">0,873</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="notes"><p>Inverter as fatias derruba o modelo com ordem em 5 pontos: ele usa a ordem, mas ela é redundante, porque cada fatia do V-JEPA 2 já carrega um pedaço de movimento. Avaliado numa divisão por sessão, 5 sementes.</p></aside>
+</section>
+
+<section class="slide" id="pose-cena" data-title="Surfista ou praia" data-sec="90" data-c="var(--cut)">
+  <h2>O modelo olha para o surfista, não para a praia</h2>
+  <div class="grid">
+    <div class="stack">
+      <div class="scale" role="img" aria-label="Macro F1 em 50 folds por sessão: só aparência 0,756; quadro inteiro 0,880; só surfista 0,896; só cena 0,680">
+        <div class="row"><span>só surfista</span><div class="axis"><span class="dot" style="--c: var(--cut); left: 84.6%"><em>0,896</em></span></div></div>
+        <div class="row"><span>quadro inteiro</span><div class="axis"><span class="dot" style="--c: var(--deep); left: 80%"><em>0,880</em></span></div></div>
+        <div class="row"><span>3 fotos paradas</span><div class="axis"><span class="dot" style="--c: var(--swell); left: 44.6%"><em>0,756</em></span></div></div>
+        <div class="row"><span>só cena</span><div class="axis"><span class="dot" style="--c: var(--none); left: 22.9%"><em>0,680</em></span></div></div>
+        <div class="row ticks-row"><span></span><div class="ticks"><span style="left: 0%">0,60</span><span style="left: 28.6%">0,70</span><span style="left: 57.1%">0,80</span><span style="left: 85.7%">0,90</span></div></div>
+      </div>
+      <ul>
+        <li><strong>Recortar o surfista melhora todas as manobras.</strong> Apagar o surfista derruba 20 pontos.</li>
+        <li><strong>O take-off não é atalho de cena.</strong> Ele acerta até com fotos paradas (0,899) pela postura: deitado, levantando.</li>
+      </ul>
+    </div>
+    <figure>
+      <img src="assets/annotated_frames.jpg" alt="Quadros de vídeos externos com o esqueleto do surfista, a caixa colorida pela manobra e a barra da linha do tempo" loading="lazy">
+      <figcaption>O esqueleto (YOLO26-pose) é só ilustrativo: o classificador decide pelo V-JEPA 2 no recorte.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes"><p>"3 fotos paradas" = DINOv2, sem movimento. "Só cena" ainda vaza tamanho da região cinza e spray, então é um teto. O YOLO acha o surfista em 96,5% dos quadros; o take-off é o mais difícil (deitado não parece pessoa).</p></aside>
+</section>
+
+<section class="slide" id="fora" data-title="Vídeos de fora" data-sec="90" data-c="var(--c360)">
+  <h2>Fora do estilo de campeonato, ele erra com 99% de certeza</h2>
+  <div class="grid">
+    <div class="stack">
+      <table>
+        <thead><tr><th>filmagem</th><th>sem filtro</th><th class="num">barrado</th></tr></thead>
+        <tbody>
+          <tr><td>lateral, parecida com campeonato</td><td>take-off certo, depois plausível</td><td class="num">40–73%</td></tr>
+          <tr><td>close em câmera lenta</td><td>take-off, 0,9–1,0 ✗</td><td class="num">100%</td></tr>
+          <tr><td>vertical (Reels)</td><td>take-off / roller ✗</td><td class="num">100%</td></tr>
+          <tr><td>drone, de cima</td><td>take-off, 0,99 ✗</td><td class="num">100%</td></tr>
+          <tr><td>kitesurf (nem é surf)</td><td>roller, 0,99 ✗</td><td class="num">100%</td></tr>
+        </tbody>
+      </table>
+      <p>A confiança do softmax não avisa. A <strong>distância aos 10 clipes de treino mais parecidos</strong> avisa: barra todas essas filmagens.</p>
+      <p class="lede">Na minha própria onda, filmada da areia em Natal: quase tudo barrado, e um trecho marcado como cutback numa virada parecida com um.</p>
+    </div>
+    <figure>
+      <video src="assets/pexels_7_annotated.mp4" muted loop playsinline controls preload="metadata" aria-label="Vídeo de drone anotado: o sistema marca a filmagem como estranha"></video>
+      <figcaption>Vídeo de drone (Pexels): sem o filtro, o modelo dizia take-off com 99%.</figcaption>
+    </figure>
+  </div>
+  <aside class="notes"><p>7 vídeos gratuitos do Pexels, anotados por mim. O limite do filtro (percentil 95) não foi ajustado nesses vídeos, de propósito. A distância de referência é medida contra clipes de outras sessões.</p></aside>
+</section>
+
+<section class="slide" id="demo" data-title="Demonstração" data-sec="120" data-c="var(--c360)">
+  <h2>Demonstração</h2>
+  <div class="tabs" role="tablist" aria-label="Modo da demonstração" hidden>
+    <button role="tab" aria-selected="true" aria-controls="demo-video" id="tab-video">Vídeo gravado</button>
+    <button role="tab" aria-selected="false" aria-controls="demo-live" id="tab-live">App ao vivo</button>
+  </div>
+  <div class="demo-pane" id="demo-video" role="tabpanel" aria-labelledby="tab-video">
+    <video src="assets/demo_montage.mp4" controls autoplay muted loop playsinline preload="metadata" aria-label="Doze clipes de teste, três de cada manobra, reconhecidos pelo sistema"></video>
+  </div>
+  <div class="demo-pane" id="demo-live" role="tabpanel" aria-labelledby="tab-live" hidden>
+    <iframe title="App Gradio rodando localmente" data-src="http://127.0.0.1:7860"></iframe>
+  </div>
+  <p class="lede">Doze clipes do conjunto de teste, três de cada manobra, de sessões que o modelo nunca viu. <span class="live-only" hidden>No app ao vivo, os mesmos clipes estão nos exemplos, juntos e separados.</span></p>
+  <aside class="notes"><p>Ao vivo: subir a montagem e um vídeo do Pexels, mostrar o slider de confiança e ligar/desligar o filtro no drone. Se travar, voltar para o vídeo gravado. Os 4 erros: 3 take-offs (clipes mais curtos que a janela) e 1 cutback virando roller.</p></aside>
+</section>
+
+<section class="slide" id="limites" data-title="Limitações" data-sec="60" data-c="var(--none)">
+  <h2>O que ainda não funciona</h2>
+  <ul>
+    <li><strong>Não existe a classe "sem manobra".</strong> Todo clipe de treino é uma manobra, então um surfista só andando na onda vira roller com 94% de confiança. Só resolve com dados de remada, espera e caminhada.</li>
+    <li><strong>Um único estilo de câmera.</strong> Close, câmera lenta, vertical e drone ficam de fora; o filtro avisa, mas não corrige.</li>
+    <li><strong>Janela fixa de 2,8 s.</strong> Mistura manobras curtas com a vizinha e corta manobras em câmera lenta.</li>
+    <li><strong>Pendências:</strong> a fonte <code>Roller_XX</code> tem 45 clipes, todos roller (possível atalho); validação de só 85 clipes; VideoMAE e o treino com 25% dos dados ficaram para depois.</li>
+  </ul>
+  <aside class="notes"><p>Ser direto: esses são os limites reais. O mais importante é a falta da classe negativa.</p></aside>
+</section>
+
+<section class="slide" id="conclusao" data-title="Conclusões" data-sec="45" data-c="var(--none)">
+  <h2>O que fica</h2>
+  <div class="grid">
+    <ul>
+      <li><strong>A avaliação mudou mais as conclusões do que o modelo.</strong> Vazamento, uma divisão só e validação pequena contavam histórias erradas.</li>
+      <li><strong>Recomendação:</strong> sonda linear sobre o V-JEPA 2 no recorte do surfista, com o filtro de distância. Macro F1 de 0,896 em 50 folds por sessão, treino em segundos.</li>
+      <li><strong>Próximo passo:</strong> filmar sessões próprias em Natal, com a classe "sem manobra", e usar a pose para avaliar como a manobra foi executada.</li>
+    </ul>
+    <div class="stack links">
+      <img class="qr" src="assets/qr_repo.svg" alt="QR code do repositório no GitHub">
+      <a href="https://github.com/fabriciogmaraes/surf-maneuver-recognition">github.com/fabriciogmaraes/surf-maneuver-recognition</a>
+      <p class="lede">Código, 11 notebooks e o texto completo (README em inglês e português).</p>
+    </div>
+  </div>
+  <aside class="notes"><p>Fechar com a recomendação e o próximo passo.</p></aside>
+</section>
+
+<section class="slide title" id="obrigado" data-title="Obrigado" data-sec="15" data-c="var(--none)">
+  <h1>Obrigado.</h1>
+  <div class="links stack" style="flex-direction: row; align-items: center; gap: 28px;"><img class="qr" src="assets/qr_repo.svg" alt="QR code do repositório no GitHub"><p class="byline"><strong>Fabricio Guimarães</strong><br>github.com/fabriciogmaraes/surf-maneuver-recognition<br>linkedin.com/in/fabriciogmaraes</p></div>
+  <aside class="notes"><p>Perguntas prováveis: por que não fine-tuning? (poucos dados); por que linear e não atenção? (melhor na avaliação rigorosa, sem sementes); custo computacional? (notebook com RTX 3050).</p></aside>
+</section>
+
+</main>
+
+<nav class="heat" aria-label="Linha do tempo da apresentação">
+  <div class="segs" id="segs"><div class="cursor" id="cursor"></div></div>
+  <span class="clock num" id="clock" title="Cronômetro: tecla T">0:00 / 15:00</span>
+  <span class="help">Setas navegam, N mostra notas, T liga o cronômetro</span>
+</nav>
+
+<script>
+(() => {
+  const slides = [...document.querySelectorAll(".slide")];
+  const segs = document.getElementById("segs");
+  const cursor = document.getElementById("cursor");
+  const clock = document.getElementById("clock");
+  const total = slides.reduce((s, el) => s + Number(el.dataset.sec), 0);
+  const starts = [];
+  let acc = 0, current = 0, timerStart = null, timerId = null;
+
+  // One segment per slide, sized by its planned time
+  slides.forEach((el, i) => {
+    starts.push(acc);
+    acc += Number(el.dataset.sec);
+    const b = document.createElement("button");
+    b.style.setProperty("--w", el.dataset.sec);
+    b.style.setProperty("--c", el.dataset.c);
+    const m = Math.floor(starts[i] / 60), s = String(starts[i] % 60).padStart(2, "0");
+    b.title = `${m}:${s} ${el.dataset.title}`;
+    b.setAttribute("aria-label", `Ir para ${el.dataset.title} (${m}:${s})`);
+    b.addEventListener("click", () => go(i));
+    segs.insertBefore(b, cursor);
+  });
+  const buttons = [...segs.querySelectorAll("button")];
+
+  const fmt = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  function place() {
+    // With the timer running, the cursor shows elapsed time; otherwise the start of the current slide
+    const t = timerStart ? (Date.now() - timerStart) / 1000 : starts[current];
+    cursor.style.left = `${Math.min(t / total, 1) * 100}%`;
+    clock.textContent = `${fmt(t)} / ${fmt(total)}`;
+    clock.classList.toggle("late", timerStart !== null && t > starts[current] + Number(slides[current].dataset.sec));
+  }
+  function setCurrent(i) {
+    current = i;
+    buttons.forEach((b, k) => b.classList.toggle("on", k === i));
+    place();
+  }
+  function go(i) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    slides[i].scrollIntoView();
+    setCurrent(i);
+  }
+
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) setCurrent(slides.indexOf(e.target)); });
+  }, { threshold: 0.55 });
+  slides.forEach(s => io.observe(s));
+
+  document.addEventListener("keydown", e => {
+    if (e.target.closest("input, textarea, iframe")) return;
+    const k = e.key;
+    if (["ArrowDown", "ArrowRight", "PageDown", " "].includes(k)) { e.preventDefault(); go(current + 1); }
+    else if (["ArrowUp", "ArrowLeft", "PageUp"].includes(k)) { e.preventDefault(); go(current - 1); }
+    else if (k === "Home") { e.preventDefault(); go(0); }
+    else if (k === "End") { e.preventDefault(); go(slides.length - 1); }
+    else if (k === "n" || k === "N") document.body.classList.toggle("show-notes");
+    else if (k === "t" || k === "T") {
+      if (timerStart) { clearInterval(timerId); timerStart = null; }
+      else { timerStart = Date.now(); timerId = setInterval(place, 500); }
+      place();
+    }
+  });
+
+  // Demo tabs: the live app is only loaded when its tab is opened
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  tabs.forEach(tab => tab.addEventListener("click", () => {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", on);
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+    const frame = document.querySelector("#demo-live iframe");
+    if (tab.id === "tab-live" && !frame.src) frame.src = frame.dataset.src;
+  }));
+
+  // The live tab only appears when the page is opened on the presenter's machine
+  // (file:// or localhost, or any URL with ?live) and the Gradio app answers.
+  // On the public link nothing is probed, so visitors never see a dead tab.
+  const host = location.hostname;
+  const localPage = location.protocol === "file:" || host === "localhost" || host === "127.0.0.1"
+    || new URLSearchParams(location.search).has("live");
+  if (localPage) {
+    const app = document.querySelector("#demo-live iframe").dataset.src;
+    const probe = () => {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 1500);
+      fetch(app, { mode: "no-cors", signal: ctrl.signal })
+        .then(() => {
+          clearInterval(timer);
+          document.querySelector("#demo .tabs").hidden = false;
+          document.querySelectorAll("#demo .live-only").forEach(el => el.hidden = false);
+        })
+        .catch(() => {});
+    };
+    const timer = setInterval(probe, 5000);
+    probe();
+  }
+
+  setCurrent(0);
+})();
+</script>
+</body>
+</html>

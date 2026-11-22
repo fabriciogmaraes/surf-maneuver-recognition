@@ -94,9 +94,13 @@ def analyze(video_path, min_confidence, flag_unfamiliar, progress=gr.Progress())
 
 
 legend = " · ".join(f"<span style='color:{COLORS[k]}'>■</span> {NAMES[k]}" for k in COLORS)
-examples = [p for p in [PROJECT_ROOT / "data" / "external" / "annotated" / "test_montage.mp4",
-                        PROJECT_ROOT / "data" / "external" / "pexels_3.mp4",
-                        PROJECT_ROOT / "data" / "external" / "pexels_4.mp4"] if p.exists()]
+# Held-out test clips (unseen sessions): three per maneuver, as one montage and one by one
+DEMO_DIR = PROJECT_ROOT / "data" / "external" / "demo"
+examples = [p for p in [DEMO_DIR / name for name in (
+    "montage_4_maneuvers.mp4",
+    "takeoff_a.mp4", "cutback_a.mp4", "roller_a.mp4", "360_a.mp4",
+    "takeoff_b.mp4", "cutback_b.mp4", "roller_b.mp4", "360_b.mp4",
+    "takeoff_c.mp4", "cutback_c.mp4", "roller_c.mp4", "360_c.mp4")] if p.exists()]
 
 with gr.Blocks(title="Surf Maneuver Recognition") as demo:
     gr.Markdown(
