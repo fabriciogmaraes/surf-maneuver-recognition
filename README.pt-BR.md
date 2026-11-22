@@ -6,6 +6,8 @@ Reconhecimento e segmentação temporal de manobras de surf em vídeo: features 
 
 Trabalho final da disciplina de Visão Computacional (PPGTI3007), PPgTI/UFRN, 2026.2. Autor: Fabricio Guimarães.
 
+**Slides da apresentação:** [fabriciogmaraes.github.io/surf-maneuver-recognition](https://fabriciogmaraes.github.io/surf-maneuver-recognition/) (com a demonstração gravada)
+
 ![App Gradio: vídeo anotado, linha do tempo de probabilidades e tabela de segmentos](reports/figures/app_screenshot.png)
 
 ## Resumo

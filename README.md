@@ -6,6 +6,8 @@ Recognition and temporal segmentation of surf maneuvers in video: frozen V-JEPA 
 
 Final project for the Computer Vision course (PPGTI3007), PPgTI/UFRN, 2026.2. Author: Fabricio Guimarães.
 
+**Presentation slides:** [fabriciogmaraes.github.io/surf-maneuver-recognition](https://fabriciogmaraes.github.io/surf-maneuver-recognition/) (Portuguese, with the recorded demo)
+
 ![Gradio app: annotated video, probability timeline and segments table](reports/figures/app_screenshot.png)
 
 ## Summary
