@@ -376,11 +376,11 @@ body.show-notes .notes p, body.show-notes .notes li { font-size: 15px; }
         </tbody>
       </table>
       <p>A confiança do softmax não avisa. A <strong>distância aos 10 clipes de treino mais parecidos</strong> avisa: barra todas essas filmagens.</p>
-      <p class="lede">Na minha própria onda, filmada da areia em Natal: quase tudo barrado, e um trecho marcado como cutback numa virada parecida com um.</p>
+      <p class="lede">Na minha própria onda, filmada da areia em Natal: reconheceu o roller com 0,96. Quando eu caí, o filtro barrou; sem ele, a queda virava um 360 com 95%.</p>
     </div>
     <figure>
-      <video src="assets/pexels_7_annotated.mp4" muted loop playsinline controls preload="metadata" aria-label="Vídeo de drone anotado: o sistema marca a filmagem como estranha"></video>
-      <figcaption>Vídeo de drone (Pexels): sem o filtro, o modelo dizia take-off com 99%.</figcaption>
+      <video src="assets/minha_onda_annotated.mp4" autoplay muted loop playsinline controls preload="metadata" aria-label="Minha onda em Natal anotada: roller reconhecido, depois a queda marcada como filmagem estranha"></video>
+      <figcaption>Minha onda, Natal: caixa verde no roller, cinza quando o filtro barra a queda.</figcaption>
     </figure>
   </div>
   <aside class="notes"><p>7 vídeos gratuitos do Pexels, anotados por mim. O limite do filtro (percentil 95) não foi ajustado nesses vídeos, de propósito. A distância de referência é medida contra clipes de outras sessões.</p></aside>
