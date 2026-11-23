@@ -6,7 +6,7 @@ Recognition and temporal segmentation of surf maneuvers in video: frozen V-JEPA 
 
 Final project for the Computer Vision course (PPGTI3007), PPgTI/UFRN, 2026.2. Author: Fabricio Guimarães.
 
-**Presentation slides:** [fabriciogmaraes.github.io/surf-maneuver-recognition](https://fabriciogmaraes.github.io/surf-maneuver-recognition/) (Portuguese, with the recorded demo)
+**Presentation slides:** [fabriciogmaraes.github.io/surf-maneuver-recognition](https://fabriciogmaraes.github.io/surf-maneuver-recognition/) (Portuguese and English, with the recorded demo)
 
 ![Gradio app: annotated video, probability timeline and segments table](reports/figures/app_screenshot.png)
 
@@ -186,11 +186,18 @@ Planned at the start and left out for time: VideoMAE fine-tuning as a second mod
 
 ```bash
 uv venv --python 3.11
-uv pip install -r requirements.txt   # PyTorch with CUDA: install the cu128 build first
+# PyTorch with CUDA 12.8 first (the default PyPI build is CPU-only on Windows)
+uv pip install torch==2.11.0 torchvision==0.26.0 --index-url https://download.pytorch.org/whl/cu128
+uv pip install -r requirements.txt
 ```
 
-1. Download the dataset into `data/raw/data-split/` (`train/`, `val/`, `test/`, one folder per class).
-2. Run the notebooks in order (01 → 11). Features and boxes are cached in `data/processed/` (not versioned); V-JEPA 2 extraction takes about 7 minutes per clip version on an RTX 3050 Laptop GPU.
+1. Download and unzip the dataset; the zip already contains `data-split/` (`train/`, `val/`, `test/`, one folder per class):
+
+   ```bash
+   hf download 2nzi/surf-maneuvers data-split.zip --repo-type dataset --local-dir data/raw
+   unzip data/raw/data-split.zip -d data/raw   # PowerShell: Expand-Archive data/raw/data-split.zip data/raw
+   ```
+2. Run the notebooks in order (01 → 11). Features and boxes are cached in `data/processed/` (not versioned); V-JEPA 2 extraction takes about 7 minutes per dataset version (full frame, surfer crop, scene-only) on an RTX 3050 Laptop GPU, about 0.38 s per clip.
 3. Start the app from the project root: `python app/app.py`, then open http://127.0.0.1:7860.
 
 All experiments ran on an RTX 3050 Laptop GPU (6 GB). NPAD/UFRN access (`npad/`) was set up for heavier training, which this report did not need.
@@ -217,7 +224,7 @@ All experiments ran on an RTX 3050 Laptop GPU (6 GB). NPAD/UFRN access (`npad/`)
 - `data/` — local data (only `splits.csv` is versioned)
 - `models/` — saved linear probe and novelty check used by the app
 - `notebooks/` — experiments, each ending with a Findings section
-- `npad/` — SLURM job scripts for the NPAD supercomputer
+- `npad/` — NPAD/UFRN supercomputer access notes (set up, not used in this report)
 - `reports/figures/` — figures used in this README
 - `src/data/` — clip inventory, video reading, features, session-aware folds, surfer crop
 - `src/models/` — V-JEPA 2 encoder, probes, training and evaluation

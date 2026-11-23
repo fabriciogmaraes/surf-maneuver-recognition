@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it as below."
+title: "Surf Maneuver Recognition: recognition and temporal segmentation of surf maneuvers in video"
+type: software
+authors:
+  - family-names: "Guimarães Alcântara da Silva"
+    given-names: "Fabricio"
+    affiliation: "PPgTI, Universidade Federal do Rio Grande do Norte (UFRN)"
+repository-code: "https://github.com/fabriciogmaraes/surf-maneuver-recognition"
+url: "https://fabriciogmaraes.github.io/surf-maneuver-recognition/"
+license: MIT
+date-released: "2026-11-23"
+keywords:
+  - computer vision
+  - video action recognition
+  - surfing
+  - V-JEPA 2
+  - YOLO26

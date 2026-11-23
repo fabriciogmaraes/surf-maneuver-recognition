@@ -6,7 +6,7 @@ Reconhecimento e segmentação temporal de manobras de surf em vídeo: features 
 
 Trabalho final da disciplina de Visão Computacional (PPGTI3007), PPgTI/UFRN, 2026.2. Autor: Fabricio Guimarães.
 
-**Slides da apresentação:** [fabriciogmaraes.github.io/surf-maneuver-recognition](https://fabriciogmaraes.github.io/surf-maneuver-recognition/) (com a demonstração gravada)
+**Slides da apresentação:** [fabriciogmaraes.github.io/surf-maneuver-recognition](https://fabriciogmaraes.github.io/surf-maneuver-recognition/) (em português e inglês, com a demonstração gravada)
 
 ![App Gradio: vídeo anotado, linha do tempo de probabilidades e tabela de segmentos](reports/figures/app_screenshot.png)
 
@@ -186,11 +186,18 @@ Planejados no início e deixados de fora por tempo: ajuste fino do VideoMAE como
 
 ```bash
 uv venv --python 3.11
-uv pip install -r requirements.txt   # PyTorch com CUDA: instale antes a versão cu128
+# Primeiro o PyTorch com CUDA 12.8 (a versão padrão do PyPI no Windows é só CPU)
+uv pip install torch==2.11.0 torchvision==0.26.0 --index-url https://download.pytorch.org/whl/cu128
+uv pip install -r requirements.txt
 ```
 
-1. Baixe o dataset em `data/raw/data-split/` (`train/`, `val/`, `test/`, uma pasta por classe).
-2. Rode os notebooks em ordem (01 → 11). Features e caixas ficam em cache em `data/processed/` (não versionado); a extração do V-JEPA 2 leva uns 7 minutos por versão dos clipes numa RTX 3050 Laptop.
+1. Baixe e descompacte o dataset; o zip já contém `data-split/` (`train/`, `val/`, `test/`, uma pasta por classe):
+
+   ```bash
+   hf download 2nzi/surf-maneuvers data-split.zip --repo-type dataset --local-dir data/raw
+   unzip data/raw/data-split.zip -d data/raw   # PowerShell: Expand-Archive data/raw/data-split.zip data/raw
+   ```
+2. Rode os notebooks em ordem (01 → 11). Features e caixas ficam em cache em `data/processed/` (não versionado); a extração do V-JEPA 2 leva uns 7 minutos por versão do dataset (quadro inteiro, recorte do surfista, só cena) numa RTX 3050 Laptop, cerca de 0,38 s por clipe.
 3. Suba o app a partir da raiz do projeto: `python app/app.py` e abra http://127.0.0.1:7860.
 
 Todos os experimentos rodaram numa RTX 3050 Laptop (6 GB). O acesso ao NPAD/UFRN (`npad/`) foi configurado para treinos mais pesados, que este relatório não precisou.
@@ -219,7 +226,7 @@ Os notebooks e o código estão em inglês.
 - `data/` — dados locais (só o `splits.csv` é versionado)
 - `models/` — sonda linear e teste de novidade salvos, usados pelo app
 - `notebooks/` — experimentos, cada um terminando com uma seção de Findings
-- `npad/` — scripts SLURM para o supercomputador NPAD
+- `npad/` — notas de acesso ao supercomputador NPAD/UFRN (configurado, não usado neste trabalho)
 - `reports/figures/` — figuras usadas neste README
 - `src/data/` — inventário de clipes, leitura de vídeo, features, folds por sessão, recorte do surfista
 - `src/models/` — codificador V-JEPA 2, sondas, treino e avaliação

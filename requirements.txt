@@ -1,24 +1,23 @@
 # Data and video
-numpy
-pandas
-opencv-python
-imageio-ffmpeg
+numpy==2.4.6
+pandas==3.1.1
+opencv-python==5.0.0.93
+imageio-ffmpeg==0.8.1
 
-# Models
-torch
-torchvision
-transformers
-ultralytics
-libreyolo
-scikit-learn
+# Models (install torch/torchvision with CUDA first; see README > Reproduce)
+torch==2.11.0
+torchvision==0.26.0
+transformers==5.23.0
+ultralytics==8.4.213
+scikit-learn==1.9.1
 
 # Visualization and app
-matplotlib
-seaborn
-gradio
+matplotlib==3.11.2
+seaborn==0.13.2
+gradio==6.32.0
 
 # Notebooks
-ipykernel
+ipykernel==7.4.0
 
 # Dataset download
-huggingface_hub
+huggingface_hub==2.4.0
