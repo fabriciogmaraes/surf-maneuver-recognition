@@ -101,6 +101,12 @@ figure img, figure video {
 }
 #fora figure video { max-height: 50vh; }
 #fora table td, #fora table th { padding-top: 7px; padding-bottom: 7px; }
+.splits { display: grid; gap: 10px; }
+.split-card { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; border-left: 6px solid var(--c); padding: 4px 0 4px 14px; }
+.split-card b { font-stretch: 72%; font-weight: 850; font-size: clamp(36px, 3.6vw, 60px); line-height: 1; }
+.split-card div { font-size: clamp(14px, 1.1vw, 18px); line-height: 1.35; color: var(--swell); }
+.split-card strong { color: var(--deep); }
+#vazamento li { font-size: clamp(14px, 1.2vw, 19px); }
 figcaption { font-size: 14px; color: var(--swell); margin-top: 8px; text-align: center; }
 .num { font-variant-numeric: tabular-nums; }
 
@@ -433,31 +439,8 @@ body.show-notes .notes p, body.show-notes .notes li { font-size: 15px; }
   <aside class="notes"><p>Dados reais da animação: cada quadradinho é um dos 1.056 clipes. Primeiro a divisão original (as cores aparecem nas três faixas), depois a divisão por sessão (cada cor numa faixa só). Os botões param a animação. Até onde encontrei, nenhum estudo publicado usou esse dataset, então a auditoria é contribuição.</p></aside>
 </section>
 
-<!-- 5. Pipeline -->
-<section class="slide" id="pipeline" data-title="Pipeline" data-title-en="Pipeline" data-sec="60" data-c="var(--cut)">
-  <h2><span class="pt">Como um vídeo vira linha do tempo</span><span class="en">How a video becomes a timeline</span></h2>
-  <div class="road" id="road">
-    <svg class="path" aria-hidden="true"><path id="road-path" fill="none" stroke="var(--sand)" stroke-width="22" stroke-linecap="round"/><path id="road-dash" fill="none" stroke="var(--paper)" stroke-width="2.5" stroke-dasharray="10 12"/></svg>
-    <div class="stop" style="grid-column: 1; grid-row: 1"><span class="n">1</span><b><span class="pt">Cortar em trechos</span><span class="en">Cut into windows</span></b><span class="d"><span class="pt">2,8 s cada, um novo a cada 0,7 s</span><span class="en">2.8 s each, a new one every 0.7 s</span></span></div>
-    <div class="stop" style="grid-column: 2; grid-row: 1"><span class="n">2</span><b><span class="pt">Achar o surfista</span><span class="en">Find the surfer</span></b><span class="d"><span class="pt">YOLO26 em cada quadro, descartando detecções soltas</span><span class="en">YOLO26 on every frame, dropping stray detections</span></span></div>
-    <div class="stop" style="grid-column: 3; grid-row: 1"><span class="n">3</span><b><span class="pt">Recortar</span><span class="en">Crop</span></b><span class="d"><span class="pt">um quadrado fixo em volta da trajetória</span><span class="en">one fixed square around the surfer's path</span></span></div>
-    <div class="stop" style="grid-column: 3; grid-row: 2"><span class="n">4</span><b><span class="pt">Descrever o movimento</span><span class="en">Describe the motion</span></b><span class="d"><span class="pt">V-JEPA 2: o trecho vira 8 × 1.024 números</span><span class="en">V-JEPA 2: the window becomes 8 × 1,024 numbers</span></span></div>
-    <div class="stop" style="grid-column: 2; grid-row: 2"><span class="n">5</span><b><span class="pt">Decidir a manobra</span><span class="en">Decide the maneuver</span></b><span class="d"><span class="pt">regressão logística, a única parte treinada</span><span class="en">logistic regression, the only trained part</span></span></div>
-    <div class="stop" style="grid-column: 1; grid-row: 2"><span class="n">6</span><b><span class="pt">Montar a linha do tempo</span><span class="en">Build the timeline</span></b><span class="d"><span class="pt">junta trechos vizinhos com o mesmo rótulo</span><span class="en">merges neighboring windows with the same label</span></span></div>
-  </div>
-  <div class="labels">
-    <span style="--c: var(--tko)"><i></i>take-off</span>
-    <span style="--c: var(--cut)"><i></i>cutback</span>
-    <span style="--c: var(--rol)"><i></i>roller</span>
-    <span style="--c: var(--c360)"><i></i>360</span>
-    <span style="--c: var(--none)"><i></i><span class="pt">sem manobra (confiança abaixo de 60% ou surfista sumiu)</span><span class="en">no maneuver (confidence below 60% or surfer lost)</span></span>
-    <span style="--c: var(--unfam)"><i></i><span class="pt">filmagem estranha (diferente de tudo do treino)</span><span class="en">unfamiliar footage (unlike anything in training)</span></span>
-  </div>
-  <aside class="notes"><p>Seguir a estrada: 1 a 3 na linha de cima, 4 a 6 voltando na de baixo. Detalhe das ferramentas fica para o próximo slide.</p></aside>
-</section>
-
-<!-- 6. Tools -->
-<section class="slide" id="ferramentas" data-title="Ferramentas" data-title-en="Tools" data-sec="60" data-c="var(--cut)">
+<!-- 5. Tools -->
+<section class="slide" id="ferramentas" data-title="Ferramentas" data-title-en="Tools" data-sec="45" data-c="var(--cut)">
   <h2><span class="pt">Cada ferramenta tem um motivo</span><span class="en">Every tool has a reason</span></h2>
   <div class="tools">
     <div class="tool"><b>YOLO26</b><span class="role"><span class="pt">acha o surfista</span><span class="en">finds the surfer</span></span><span class="why"><span class="pt">Já vem treinado para achar pessoas e roda rápido em cada quadro.</span><span class="en">Already trained to find people, and fast enough for every frame.</span></span></div>
@@ -470,28 +453,59 @@ body.show-notes .notes p, body.show-notes .notes li { font-size: 15px; }
   <aside class="notes"><p>Por que congelar o V-JEPA 2: com ~1.000 clipes, ajustar 326 milhões de parâmetros decoraria o treino. A regressão logística tem ~4 mil parâmetros.</p></aside>
 </section>
 
+<!-- 6. Pipeline -->
+<section class="slide" id="pipeline" data-title="Pipeline" data-title-en="Pipeline" data-sec="90" data-c="var(--cut)">
+  <h2><span class="pt">Como um vídeo vira linha do tempo</span><span class="en">How a video becomes a timeline</span></h2>
+  <div class="road" id="road">
+    <svg class="path" aria-hidden="true"><path id="road-path" fill="none" stroke="var(--sand)" stroke-width="22" stroke-linecap="round"/><path id="road-dash" fill="none" stroke="var(--paper)" stroke-width="2.5" stroke-dasharray="10 12"/></svg>
+    <div class="stop" style="grid-column: 1; grid-row: 1"><span class="n">1</span><b><span class="pt">Cortar em trechos</span><span class="en">Cut into windows</span></b><span class="d"><span class="pt">janelas de 2,8 s (a duração típica de uma manobra), uma nova a cada 0,7 s; cada momento é visto por ~4 janelas; 16 quadros por janela</span><span class="en">2.8 s windows (a typical maneuver), a new one every 0.7 s; each moment is seen by ~4 windows; 16 frames per window</span></span></div>
+    <div class="stop" style="grid-column: 2; grid-row: 1"><span class="n">2</span><b><span class="pt">Achar o surfista</span><span class="en">Find the surfer</span></b><span class="d"><span class="pt">o YOLO26 marca as pessoas nos 16 quadros; fica a mais confiável, e caixas que pulam para longe (outro surfista, erro) são descartadas</span><span class="en">YOLO26 marks people in the 16 frames; the most confident one stays, and boxes that jump away (another surfer, an error) are dropped</span></span></div>
+    <div class="stop" style="grid-column: 3; grid-row: 1"><span class="n">3</span><b><span class="pt">Recortar</span><span class="en">Crop</span></b><span class="d"><span class="pt">um quadrado fixo em volta de toda a trajetória; fixo para o modelo ver o surfista se deslocando na onda</span><span class="en">one fixed square around the whole path; fixed so the model sees the surfer moving along the wave</span></span></div>
+    <div class="stop" style="grid-column: 3; grid-row: 2"><span class="n">4</span><b><span class="pt">Descrever o movimento</span><span class="en">Describe the motion</span></b><span class="d"><span class="pt">o V-JEPA 2 transforma o recorte em 8 fatias de tempo × 1.024 números, uma "impressão digital" do movimento; a média das fatias vai adiante</span><span class="en">V-JEPA 2 turns the crop into 8 time slices × 1,024 numbers, a "fingerprint" of the motion; the average of the slices moves on</span></span></div>
+    <div class="stop" style="grid-column: 2; grid-row: 2"><span class="n">5</span><b><span class="pt">Decidir a manobra</span><span class="en">Decide the maneuver</span></b><span class="d"><span class="pt">a regressão logística, única parte treinada, dá a probabilidade de cada manobra (ex.: cutback 97%, roller 2%)</span><span class="en">logistic regression, the only trained part, gives each maneuver a probability (e.g. cutback 97%, roller 2%)</span></span></div>
+    <div class="stop" style="grid-column: 1; grid-row: 2"><span class="n">6</span><b><span class="pt">Montar a linha do tempo</span><span class="en">Build the timeline</span></b><span class="d"><span class="pt">cada janela ganha um rótulo; vizinhas iguais viram um segmento ("0:12–0:14 take-off"), que vira a barra colorida</span><span class="en">each window gets a label; equal neighbors merge into a segment ("0:12–0:14 take-off"), which becomes the colored bar</span></span></div>
+  </div>
+  <div class="labels">
+    <span style="--c: var(--tko)"><i></i>take-off</span>
+    <span style="--c: var(--cut)"><i></i>cutback</span>
+    <span style="--c: var(--rol)"><i></i>roller</span>
+    <span style="--c: var(--c360)"><i></i>360</span>
+    <span style="--c: var(--none)"><i></i><span class="pt">sem manobra (confiança abaixo de 60% ou surfista sumiu)</span><span class="en">no maneuver (confidence below 60% or surfer lost)</span></span>
+    <span style="--c: var(--unfam)"><i></i><span class="pt">filmagem estranha (diferente de tudo do treino)</span><span class="en">unfamiliar footage (unlike anything in training)</span></span>
+  </div>
+  <aside class="notes"><p>Seguir a estrada: 1 a 3 na linha de cima, 4 a 6 voltando na de baixo. As ferramentas já foram apresentadas; aqui é o como.</p></aside>
+</section>
+
 <!-- 7. Leakage -->
-<section class="slide" id="vazamento" data-title="Vazamento medido" data-title-en="Leakage measured" data-sec="90" data-c="var(--cut)">
+<section class="slide" id="vazamento" data-title="Vazamento medido" data-title-en="Leakage measured" data-sec="75" data-c="var(--cut)">
   <h2><span class="pt">Repetido 50 vezes: o vazamento inflava o resultado em 3 pontos</span><span class="en">Repeated 50 times: leakage inflated the score by 3 points</span></h2>
   <div class="grid">
     <div class="stack">
-      <div class="bignums">
-        <div class="bignum" style="--c: var(--none)"><b class="num"><span class="pt">0,911</span><span class="en">0.911</span></b><span><span class="pt">divisão por clipe (com vazamento)</span><span class="en">clip-level split (leaky)</span></span></div>
-        <div class="bignum" style="--c: var(--deep)"><b class="num"><span class="pt">0,880</span><span class="en">0.880</span></b><span><span class="pt">divisão por sessão (sem vazamento)</span><span class="en">session split (no leak)</span></span></div>
+      <div class="splits">
+        <div class="split-card" style="--c: var(--none)">
+          <b class="num"><span class="pt">0,911</span><span class="en">0.911</span></b>
+          <div><strong><span class="pt">Divisão por clipe (com vazamento)</span><span class="en">Clip-level split (leaky)</span></strong><br><span class="pt">Cada clipe é sorteado sozinho: a mesma sessão cai no treino e no teste. O teste fica mais fácil.</span><span class="en">Each clip is drawn on its own: the same session lands in train and test. The test gets easier.</span></div>
+        </div>
+        <div class="split-card" style="--c: var(--deep)">
+          <b class="num"><span class="pt">0,880</span><span class="en">0.880</span></b>
+          <div><strong><span class="pt">Divisão por sessão (sem vazamento)</span><span class="en">Session split (no leak)</span></strong><br><span class="pt">Sessões inteiras são sorteadas: o teste só tem praias e surfistas que o modelo nunca viu.</span><span class="en">Whole sessions are drawn: the test only has beaches and surfers the model never saw.</span></div>
+        </div>
       </div>
       <ul class="pt">
-        <li>A diferença apareceu em <strong>10 de 10</strong> repetições.</li>
-        <li>Sem vazamento, o resultado oscila <strong>o dobro</strong>: depende de quais praias ficaram de fora.</li>
+        <li><strong>50 provas de cada:</strong> 5 partes revezando como teste × 10 sorteios. Os números são a média das 50.</li>
+        <li><strong>3 pontos a mais com vazamento</strong>, em 10 de 10 repetições: a nota extra vinha de reconhecer a praia, não a manobra.</li>
+        <li><strong>Sem vazamento a nota oscila o dobro</strong> (± 0,033 × ± 0,018): depende de quais praias caem no teste.</li>
       </ul>
       <ul class="en">
-        <li>The gap showed up in <strong>10 of 10</strong> repeats.</li>
-        <li>Without leakage, the score varies <strong>twice as much</strong>: it depends on which beaches were held out.</li>
+        <li><strong>50 tests each:</strong> 5 parts taking turns as the test × 10 shuffles. The numbers are the mean of the 50.</li>
+        <li><strong>3 extra points with leakage</strong>, in 10 of 10 repeats: the extra score came from recognizing the beach, not the maneuver.</li>
+        <li><strong>Without leakage the score varies twice as much</strong> (± 0.033 vs ± 0.018): it depends on which beaches land in the test.</li>
       </ul>
       <p class="small"><span class="pt">Bastidor: o <code>StratifiedGroupKFold</code> do scikit-learn gerou só 7 divisões diferentes em 50, então escrevi um divisor próprio.</span><span class="en">Behind the scenes: scikit-learn's <code>StratifiedGroupKFold</code> produced only 7 distinct splits out of 50, so I wrote my own splitter.</span></p>
     </div>
     <figure>
       <svg class="chart" id="leak-chart" role="img"></svg>
-      <figcaption><span class="pt">Cada ponto é uma rodada. Mesmo modelo, mesmos dados; só muda a divisão.</span><span class="en">Each dot is one fold. Same model, same data; only the split changes.</span></figcaption>
+      <figcaption><span class="pt">Cada ponto é uma prova; a linha amarela é a média. Mesmo modelo, mesmos dados: só muda a divisão.</span><span class="en">Each dot is one test; the yellow line is the mean. Same model, same data: only the split changes.</span></figcaption>
     </figure>
   </div>
   <aside class="notes"><p>Uma divisão só (0,886 × 0,856) podia ser sorte. 10 repetições de validação cruzada de 5 folds. Mann-Whitney p = 7×10⁻⁷. O bug do scikit-learn: ordena os grupos antes de embaralhar.</p></aside>
@@ -510,22 +524,22 @@ body.show-notes .notes p, body.show-notes .notes li { font-size: 15px; }
       <b><span class="pt">Média das fatias</span><span class="en">Average of slices</span></b>
       <div class="mini mean" id="mini-mean" aria-hidden="true"></div>
       <span class="score num"><span class="pt">0,856</span><span class="en">0.856</span></span>
-      <span class="how"><span class="pt">Simples e estável. Nas 50 divisões: <strong>0,880</strong> no quadro inteiro e <strong>0,896</strong> no recorte (próximo slide).</span><span class="en">Simple and stable. Over 50 splits: <strong>0.880</strong> on the full frame and <strong>0.896</strong> on the crop (next slide).</span></span>
+      <span class="how"><span class="pt">Soma as 8 fatias e divide: todas pesam igual e a ordem se perde. Estável; nas 50 divisões dá <strong>0,880</strong> no quadro inteiro e <strong>0,896</strong> no recorte.</span><span class="en">Adds the 8 slices and divides: all weigh the same and order is lost. Stable; over 50 splits it gives <strong>0.880</strong> on the full frame and <strong>0.896</strong> on the crop.</span></span>
     </div>
     <div class="probe">
       <b><span class="pt">Atenção, em ordem</span><span class="en">Attention, in order</span></b>
       <div class="mini attn" id="mini-attn" aria-hidden="true"></div>
       <span class="score num"><span class="pt">0,921</span><span class="en">0.921</span> <small>± 0,025</small></span>
-      <span class="how"><span class="pt">Pesa cada fatia e sabe a posição dela.</span><span class="en">Weighs each slice and knows its position.</span></span>
+      <span class="how"><span class="pt">Uma pequena rede aprende um peso para cada fatia e sabe a posição dela (1ª, 2ª…). ± = variação entre 5 treinos.</span><span class="en">A small network learns a weight for each slice and knows its position (1st, 2nd…). ± = spread over 5 training runs.</span></span>
     </div>
     <div class="probe">
       <b><span class="pt">Atenção, sem saber a ordem</span><span class="en">Attention, without order</span></b>
       <div class="mini bag" id="mini-bag" aria-hidden="true"></div>
       <span class="score num"><span class="pt">0,911</span><span class="en">0.911</span> <small>± 0,017</small></span>
-      <span class="how"><span class="pt">O controle: mesmos pesos, sem posição.</span><span class="en">The control: same weights, no position.</span></span>
+      <span class="how"><span class="pt">A mesma rede, sem saber a posição. É o controle: só a ordem muda entre os dois cards de atenção.</span><span class="en">The same network, without the position. It is the control: only order differs between the two attention cards.</span></span>
     </div>
   </div>
-  <p class="lede"><span class="pt">As duas de atenção empatam: o ganho vem de pesar as fatias, não da ordem. Fiquei com a média porque as de atenção variam entre treinos e foram medidas numa divisão só; a média treina em segundos e foi avaliada em 50.</span><span class="en">Both attention probes tie: the gain comes from weighing slices, not from order. I kept the average because the attention probes vary between runs and were measured on a single split; the average trains in seconds and was evaluated on 50.</span></p>
+  <p class="lede"><span class="pt"><strong>Como ler:</strong> com e sem ordem empatam dentro da variação (±), então o ganho veio de pesar as fatias, não da ordem. <strong>Por que a média:</strong> é estável, treina em segundos e foi avaliada nas 50 divisões; a atenção só foi medida numa.</span><span class="en"><strong>How to read it:</strong> with and without order tie within the spread (±), so the gain came from weighing the slices, not from order. <strong>Why the average:</strong> it is stable, trains in seconds and was evaluated on all 50 splits; attention was measured on one.</span></p>
   <aside class="notes"><p>Inverter as fatias derruba o modelo com ordem em 5 pontos: ele usa a ordem, mas ela é redundante, porque cada fatia do V-JEPA 2 já carrega um pedaço de movimento. Números desta tela: quadro inteiro, uma divisão por sessão, 5 sementes.</p></aside>
 </section>
 
